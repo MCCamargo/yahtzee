@@ -30,6 +30,8 @@ class Scorecard:
             "fours": None,
             "fives": None,
             "sixes": None,
+            "pair":None,
+            "two_pair": None,
             "three_of_a_kind": None,
             "four_of_a_kind": None,
             "full_house": None,
@@ -37,19 +39,28 @@ class Scorecard:
             "large_straight": None,
             "yahtzee": None,
             "chance": None
-        }
+        
     
     def calculate_score(self, category: str, dice: List[Die]) -> int:
         values = [die.value for die in dice]
         value_counts = {i: values.count(i) for i in range(1, 7)}
         
+        
         if category in ["ones", "twos", "threes", "fours", "fives", "sixes"]:
             number = {"ones": 1, "twos": 2, "threes": 3, "fours": 4, "fives": 5, "sixes": 6}[category]
             return sum(v for v in values if v == number)
-            
+        
+        # need to implement pair and two pair
+        
+        # problem in scoring pairs, two pairs, three of a kind, full house, straights
+        
         elif category == "three_of_a_kind":
             if max(value_counts.values()) >= 3:
-                return sum(values)
+                optimal_score = 0
+                for i in range(1,7):
+                    if value_counts[i] >= 3:
+                        optimal_score = max(optimal_score, 3*i)                       
+                return optimal_score
             return 0
             
         elif category == "four_of_a_kind":
@@ -76,8 +87,8 @@ class Scorecard:
             return 0
             
         elif category == "yahtzee":
-            if max(value_counts.values()) == 5:
-                return 50
+            if max(value_counts.values()) == 6:
+                return 100
             return 0
             
         elif category == "chance":
@@ -102,7 +113,7 @@ class Scorecard:
 
 class Game:
     def __init__(self):
-        self.dice = [Die() for _ in range(5)]
+        self.dice = [Die() for _ in range(6)]
         self.rolls_left = 3
         self.scorecard = Scorecard()
     
