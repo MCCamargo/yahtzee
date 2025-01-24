@@ -39,6 +39,7 @@ class Scorecard:
             "large_straight": None,
             "yahtzee": None,
             "chance": None
+            }
         
     
     def calculate_score(self, category: str, dice: List[Die]) -> int:
@@ -50,40 +51,71 @@ class Scorecard:
             number = {"ones": 1, "twos": 2, "threes": 3, "fours": 4, "fives": 5, "sixes": 6}[category]
             return sum(v for v in values if v == number)
         
-        # need to implement pair and two pair
         
-        # problem in scoring pairs, two pairs, three of a kind, full house, straights
+        # problem in scoring full house
         
+        elif category == "pair":
+            if max(value_counts.values()) >= 2:
+                for i in range(6,0, -1):
+                    if value_counts[i] >= 2:
+                        return 2*i
+            return 0
+        # treats four of a kind as 0
+        elif category == "two_pair":
+            
+            pairs = [value for value, count in value_counts.items() if count >= 2]
+            if len(pairs) >= 2:
+                pairs.sort(reverse=True)
+                score = (pairs[0] * 2) + (pairs[1] * 2)
+                return score
+            return 0
+            
+            
         elif category == "three_of_a_kind":
             if max(value_counts.values()) >= 3:
-                optimal_score = 0
-                for i in range(1,7):
+                for i in range(6,0,-1):
                     if value_counts[i] >= 3:
-                        optimal_score = max(optimal_score, 3*i)                       
-                return optimal_score
+                        return 3*i                       
             return 0
             
         elif category == "four_of_a_kind":
             if max(value_counts.values()) >= 4:
-                return sum(values)
+                for i in range(6,0,-1):
+                    if value_counts[i] >= 4:
+                        return 4*i
             return 0
-            
+        
+        # change to actual score?
         elif category == "full_house":
             if 2 in value_counts.values() and 3 in value_counts.values():
-                return 25
+                
+                candidates = [(value, count) for value, count in value_counts.items() if count >= 2]
+                
+                candidates.sort(reverse = True)
+                
+                if candidates[0][1] >= 3:
+                    return 3*candidates[0][0] + 2*candidates[1][0]
+                else:
+                    return 2*candidates[0][0] + 3*candidates[1][0]
+                
+                
+                
+               
+                        
             return 0
             
+        
         elif category == "small_straight":
             sorted_values = sorted(list(set(values)))
-            for i in range(len(sorted_values) - 3):
-                if sorted_values[i+3] - sorted_values[i] == 3:
-                    return 30
+            if len(sorted_values) >= 5 and sorted_values[0] == 1 and sorted_values[4] == 5:
+                return 15
+          
             return 0
-            
+        
         elif category == "large_straight":
             sorted_values = sorted(list(set(values)))
-            if len(sorted_values) >= 5 and sorted_values[4] - sorted_values[0] == 4:
-                return 40
+            if len(sorted_values) >= 5 and sorted_values[0] == 2 and sorted_values[4] == 6:
+                return 20
             return 0
             
         elif category == "yahtzee":
@@ -126,7 +158,7 @@ class Game:
         return False
     
     def toggle_hold(self, die_index: int) -> bool:
-        if 0 <= die_index < 5 and self.rolls_left < 3:
+        if 0 <= die_index < 6 and self.rolls_left < 3:
             self.dice[die_index].toggle_hold()
             return True
         return False
