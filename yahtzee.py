@@ -40,6 +40,11 @@ class Scorecard:
             "yahtzee": None,
             "chance": None
             }
+    def is_game_over(self) -> bool:
+        #app.logger.info(f"Checking game over. Scores: {self.scores}")  # Debug log
+        is_over = all(score is not None for score in self.scores.values())
+        #app.logger.info(f"Game over status: {is_over}")  # Debug log
+        return is_over
         
     
     def calculate_score(self, category: str, dice: List[Die]) -> int:
@@ -97,11 +102,7 @@ class Scorecard:
                     return 3*candidates[0][0] + 2*candidates[1][0]
                 else:
                     return 2*candidates[0][0] + 3*candidates[1][0]
-                
-                
-                
-               
-                        
+              
             return 0
             
         
@@ -148,8 +149,17 @@ class Game:
         self.dice = [Die() for _ in range(6)]
         self.rolls_left = 3
         self.scorecard = Scorecard()
+        self.current_turn_scored = False
+        self.game_started = False
     
     def roll_dice(self) -> bool:
+        self.game_started = True
+        if self.current_turn_scored:  # Reset everything on new roll after scoring
+            self.rolls_left = 3
+            self.current_turn_scored = False
+            for die in self.dice:
+                die.held = False
+            
         if self.rolls_left > 0:
             for die in self.dice:
                 die.roll()
@@ -163,13 +173,20 @@ class Game:
             return True
         return False
     
-    def score(self, category: str) -> bool:
+    def score(self, category: str) -> str:  # Changed return type to str
+        if not self.game_started:
+            return "game_not_started"
+            
+        if self.current_turn_scored:
+            return "turn_scored"
         success = self.scorecard.score_category(category, self.dice)
         if success:
+            self.current_turn_scored = True
             self.rolls_left = 3
             for die in self.dice:
                 die.held = False
-        return success
+            return "success"
+        return "category_used"
     
     def to_dict(self):
         return {
@@ -223,11 +240,28 @@ def score_category(game_id, category):
     if game_id not in games:
         return jsonify({"error": "Game not found"}), 404
     
-    success = games[game_id].score(category)
-    if not success:
-        return jsonify({"error": "Category already scored or invalid"}), 400
+    game = games[game_id]
+    result = game.score(category)
+    if result == "game_not_started":
+        return jsonify({"error": "Roll the dice to start!"}), 400
+    elif result == "turn_scored":
+        return jsonify({"error": "You already scored this turn! Roll again for a new turn."}), 400
+    elif result == "category_used":
+        return jsonify({"error": "This category has already been scored"}), 400
     
-    return jsonify(games[game_id].to_dict())
+    # Debug logs
+    app.logger.info("Checking if game is over...")
+    if game.scorecard.is_game_over():
+        app.logger.info("Game is over! Sending final score")
+        response_data = {
+            "game_over": True,
+            "final_score": game.scorecard.get_total(),
+            "game_state": game.to_dict()
+        }
+        app.logger.info(f"Response data: {response_data}")
+        return jsonify(response_data)
+    
+    return jsonify(game.to_dict())
 
 if __name__ == '__main__':
     app.run(debug=True)
