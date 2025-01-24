@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Yahtzee Game</title>
+    <style>
+        .die {
+            width: 60px;
+            height: 60px;
+            border: 2px solid black;
+            margin: 5px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .held {
+            background-color: #ffcccc;
+        }
+        .category {
+            cursor: pointer;
+        }
+        .scored {
+            background-color: #e0e0e0;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <h1>Yahtzee</h1>
+    
+    <div id="game-controls">
+        <button onclick="startNewGame()">New Game</button>
+        <button onclick="rollDice()">Roll Dice</button>
+        <span id="rolls-left"></span>
+    </div>
+
+    <div id="dice-container"></div>
+
+    <h2>Scorecard</h2>
+    <table id="scorecard">
+        <tr><td class="category" onclick="score('ones')">Ones</td><td id="score-ones"></td></tr>
+        <tr><td class="category" onclick="score('twos')">Twos</td><td id="score-twos"></td></tr>
+        <tr><td class="category" onclick="score('threes')">Threes</td><td id="score-threes"></td></tr>
+        <tr><td class="category" onclick="score('fours')">Fours</td><td id="score-fours"></td></tr>
+        <tr><td class="category" onclick="score('fives')">Fives</td><td id="score-fives"></td></tr>
+        <tr><td class="category" onclick="score('sixes')">Sixes</td><td id="score-sixes"></td></tr>
+        <tr><td class="category" onclick="score('three_of_a_kind')">Three of a Kind</td><td id="score-three_of_a_kind"></td></tr>
+        <tr><td class="category" onclick="score('four_of_a_kind')">Four of a Kind</td><td id="score-four_of_a_kind"></td></tr>
+        <tr><td class="category" onclick="score('full_house')">Full House</td><td id="score-full_house"></td></tr>
+        <tr><td class="category" onclick="score('small_straight')">Small Straight</td><td id="score-small_straight"></td></tr>
+        <tr><td class="category" onclick="score('large_straight')">Large Straight</td><td id="score-large_straight"></td></tr>
+        <tr><td class="category" onclick="score('yahtzee')">Yahtzee</td><td id="score-yahtzee"></td></tr>
+        <tr><td class="category" onclick="score('chance')">Chance</td><td id="score-chance"></td></tr>
+        <tr><td><strong>Total</strong></td><td id="score-total"></td></tr>
+    </table>
+
+    <script>
+        let gameId = null;
+
+        async function startNewGame() {
+            const response = await fetch('http://localhost:5000/game/new', {
+                method: 'POST'
+            });
+            const data = await response.json();
+            gameId = data.game_id;
+            updateGameState();
+        }
+
+        async function updateGameState() {
+            if (gameId === null) return;
+            
+            const response = await fetch(`http://localhost:5000/game/${gameId}`);
+            const game = await response.json();
+            
+            // Update dice
+            const diceContainer = document.getElementById('dice-container');
+            diceContainer.innerHTML = '';
+            game.dice.forEach((die, index) => {
+                const dieElement = document.createElement('div');
+                dieElement.className = `die ${die.held ? 'held' : ''}`;
+                dieElement.textContent = die.value;
+                dieElement.onclick = () => toggleHold(index);
+                diceContainer.appendChild(dieElement);
+            });
+
+            // Update rolls left
+            document.getElementById('rolls-left').textContent = 
+                `Rolls left: ${game.rolls_left}`;
+
+            // Update scorecard
+            for (const [category, score] of Object.entries(game.scorecard.scores)) {
+                const element = document.getElementById(`score-${category}`);
+                if (element) {
+                    element.textContent = score !== null ? score : '';
+                    const row = element.parentElement;
+                    if (score !== null) {
+                        row.querySelector('.category').classList.add('scored');
+                    } else {
+                        row.querySelector('.category').classList.remove('scored');
+                    }
+                }
+            }
+            document.getElementById('score-total').textContent = game.scorecard.total;
+        }
+
+        async function rollDice() {
+            if (gameId === null) return;
+            
+            const response = await fetch(`http://localhost:5000/game/${gameId}/roll`, {
+                method: 'POST'
+            });
+            if (response.ok) {
+                updateGameState();
+            } else {
+                alert('No rolls left!');
+            }
+        }
+
+        async function toggleHold(dieIndex) {
+            if (gameId === null) return;
+            
+            const response = await fetch(`http://localhost:5000/game/${gameId}/hold/${dieIndex}`, {
+                method: 'POST'
+            });
+            if (response.ok) {
+                updateGameState();
+            }
+        }
+
+        async function score(category) {
+            if (gameId === null) return;
+            
+            const response = await fetch(`http://localhost:5000/game/${gameId}/score/${category}`, {
+                method: 'POST'
+            });
+            if (response.ok) {
+                updateGameState();
+            } else {
+                alert('Cannot score this category!');
+            }
+        }
+
+        // Start a new game when the page loads
+        startNewGame();
+    </script>
+</body>
+</html>
