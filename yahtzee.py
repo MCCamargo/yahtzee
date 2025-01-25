@@ -65,6 +65,7 @@ class Scorecard:
         
         if category in ["ones", "twos", "threes", "fours", "fives", "sixes"]:
             number = {"ones": 1, "twos": 2, "threes": 3, "fours": 4, "fives": 5, "sixes": 6}[category]
+            
             return sum(v for v in values if v == number)
         
         
@@ -125,10 +126,11 @@ class Scorecard:
             return 0
         
         elif category == "large_straight":
-            sorted_values = sorted(list(set(values)))
-            if len(sorted_values) >= 5 and sorted_values[0] == 2 and sorted_values[4] == 6:
-                return 20
-            return 0
+            value_set = set(values)
+            for i in range(2,7):
+                if i not in value_set:
+                    return 0
+            return 20
             
         elif category == "yahtzee":
             if max(value_counts.values()) == 6:
@@ -144,10 +146,12 @@ class Scorecard:
         if self.scores[category] is not None:
             return False
         self.scores[category] = self.calculate_score(category, dice)
+        
         return True
     
     def get_total(self) -> int:
         base_total = sum(score for score in self.scores.values() if score is not None)
+        self.check_upper_bonus()
         bonus = 50 if self.upper_bonus else 0
         return base_total + bonus
         
