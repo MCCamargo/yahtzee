@@ -45,6 +45,8 @@
         <tr><td class="category" onclick="score('fours')">Fours</td><td id="score-fours"></td></tr>
         <tr><td class="category" onclick="score('fives')">Fives</td><td id="score-fives"></td></tr>
         <tr><td class="category" onclick="score('sixes')">Sixes</td><td id="score-sixes"></td></tr>
+		<tr><td class="category" onclick="score('pair')">Pair</td><td id="score-pair"></td></tr>
+		<tr><td class="category" onclick="score('two_pair')">Two Pair</td><td id="score-two_pair"></td></tr>
         <tr><td class="category" onclick="score('three_of_a_kind')">Three of a Kind</td><td id="score-three_of_a_kind"></td></tr>
         <tr><td class="category" onclick="score('four_of_a_kind')">Four of a Kind</td><td id="score-four_of_a_kind"></td></tr>
         <tr><td class="category" onclick="score('full_house')">Full House</td><td id="score-full_house"></td></tr>
@@ -128,19 +130,25 @@
             }
         }
 
-        async function score(category) {
-            if (gameId === null) return;
-            
-            const response = await fetch(`http://localhost:5000/game/${gameId}/score/${category}`, {
-                method: 'POST'
-            });
-            if (response.ok) {
-                updateGameState();
-            } else {
-                alert('Cannot score this category!');
-            }
-        }
-
+		async function score(category) {
+			if (gameId === null) return;
+			
+			const response = await fetch(`http://localhost:5000/game/${gameId}/score/${category}`, {
+				method: 'POST'
+			});
+			const data = await response.json();
+			console.log("Response from server:", data);  // Debug log
+			
+			if (response.ok) {
+				if (data.game_over) {
+					console.log("Game is over!");  // Debug log
+					alert(`Game Over! Your final score is: ${data.final_score}`);
+				}
+				updateGameState();
+			} else {
+				alert(data.error);
+			}
+		}
         // Start a new game when the page loads
         startNewGame();
     </script>
