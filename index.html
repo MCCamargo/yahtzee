@@ -3,27 +3,58 @@
 <head>
     <title>Yahtzee Game</title>
     <style>
-        .die {
-            width: 60px;
-            height: 60px;
-            border: 2px solid black;
-            margin: 5px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            cursor: pointer;
+        .scorecard-table {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 500px;
+            margin: 20px 0;
         }
-        .held {
-            background-color: #ffcccc;
+        
+        .scorecard-table td {
+            padding: 8px;
+            border: 1px solid #ddd;
         }
+        
         .category {
             cursor: pointer;
+            background-color: #f5f5f5;
         }
+        
         .scored {
             background-color: #e0e0e0;
             cursor: not-allowed;
         }
+        
+        .bonus-row td {
+            background-color: #e3f2fd;
+            font-weight: 500;
+        }
+        
+        .total-row td {
+            background-color: #1976d2;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        .upper-section-total td {
+            background-color: #f3f3f3;
+            font-style: italic;
+        }
+		.die {
+		width: 60px;
+		height: 60px;
+		border: 2px solid black;
+		margin: 5px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 24px;
+		cursor: pointer;
+		}
+		.held {
+			background-color: #ffcccc;
+		}
     </style>
 </head>
 <body>
@@ -38,15 +69,20 @@
     <div id="dice-container"></div>
 
     <h2>Scorecard</h2>
-    <table id="scorecard">
+    <table class="scorecard-table">
+        <!-- Upper section -->
         <tr><td class="category" onclick="score('ones')">Ones</td><td id="score-ones"></td></tr>
         <tr><td class="category" onclick="score('twos')">Twos</td><td id="score-twos"></td></tr>
         <tr><td class="category" onclick="score('threes')">Threes</td><td id="score-threes"></td></tr>
         <tr><td class="category" onclick="score('fours')">Fours</td><td id="score-fours"></td></tr>
         <tr><td class="category" onclick="score('fives')">Fives</td><td id="score-fives"></td></tr>
         <tr><td class="category" onclick="score('sixes')">Sixes</td><td id="score-sixes"></td></tr>
-		<tr><td class="category" onclick="score('pair')">Pair</td><td id="score-pair"></td></tr>
-		<tr><td class="category" onclick="score('two_pair')">Two Pair</td><td id="score-two_pair"></td></tr>
+        <tr class="upper-section-total"><td>Upper Section Total</td><td id="upper-section-total"></td></tr>
+        <tr class="bonus-row"><td>Upper Section Bonus (≥73)</td><td id="upper-bonus"></td></tr>
+        
+        <!-- Lower section -->
+        <tr><td class="category" onclick="score('pair')">Pair</td><td id="score-pair"></td></tr>
+        <tr><td class="category" onclick="score('two_pair')">Two Pair</td><td id="score-two_pair"></td></tr>
         <tr><td class="category" onclick="score('three_of_a_kind')">Three of a Kind</td><td id="score-three_of_a_kind"></td></tr>
         <tr><td class="category" onclick="score('four_of_a_kind')">Four of a Kind</td><td id="score-four_of_a_kind"></td></tr>
         <tr><td class="category" onclick="score('full_house')">Full House</td><td id="score-full_house"></td></tr>
@@ -54,7 +90,9 @@
         <tr><td class="category" onclick="score('large_straight')">Large Straight</td><td id="score-large_straight"></td></tr>
         <tr><td class="category" onclick="score('yahtzee')">Yahtzee</td><td id="score-yahtzee"></td></tr>
         <tr><td class="category" onclick="score('chance')">Chance</td><td id="score-chance"></td></tr>
-        <tr><td><strong>Total</strong></td><td id="score-total"></td></tr>
+        
+        <!-- Total -->
+        <tr class="total-row"><td>Total</td><td id="score-total"></td></tr>
     </table>
 
     <script>
@@ -104,7 +142,13 @@
                 }
             }
             document.getElementById('score-total').textContent = game.scorecard.total;
+			document.getElementById('upper-section-total').textContent = game.scorecard.upper_section_total;
+			
+			const bonusElement = document.getElementById('upper-bonus');
+			bonusElement.textContent = game.scorecard.upper_bonus ? '50' : '0';
+			bonusElement.className = game.scorecard.upper_bonus ? 'bonus-achieved' : 'bonus-pending';
         }
+			
 
         async function rollDice() {
             if (gameId === null) return;

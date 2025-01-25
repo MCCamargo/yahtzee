@@ -40,13 +40,24 @@ class Scorecard:
             "yahtzee": None,
             "chance": None
             }
+        self.upper_bonus = False
+        
     def is_game_over(self) -> bool:
         #app.logger.info(f"Checking game over. Scores: {self.scores}")  # Debug log
         is_over = all(score is not None for score in self.scores.values())
         #app.logger.info(f"Game over status: {is_over}")  # Debug log
         return is_over
         
+    def get_upper_section_total(self) -> int:
+        upper_categories = ["ones", "twos", "threes", "fours", "fives", "sixes"]
+        return sum(self.scores[category] or 0 for category in upper_categories)
     
+    def check_upper_bonus(self) -> bool:
+        if not self.upper_bonus and self.get_upper_section_total() >= 73:
+            self.upper_bonus = True
+            return True
+        return False
+        
     def calculate_score(self, category: str, dice: List[Die]) -> int:
         values = [die.value for die in dice]
         value_counts = {i: values.count(i) for i in range(1, 7)}
@@ -54,6 +65,7 @@ class Scorecard:
         
         if category in ["ones", "twos", "threes", "fours", "fives", "sixes"]:
             number = {"ones": 1, "twos": 2, "threes": 3, "fours": 4, "fives": 5, "sixes": 6}[category]
+            
             return sum(v for v in values if v == number)
         
         
@@ -114,10 +126,11 @@ class Scorecard:
             return 0
         
         elif category == "large_straight":
-            sorted_values = sorted(list(set(values)))
-            if len(sorted_values) >= 5 and sorted_values[0] == 2 and sorted_values[4] == 6:
-                return 20
-            return 0
+            value_set = set(values)
+            for i in range(2,7):
+                if i not in value_set:
+                    return 0
+            return 20
             
         elif category == "yahtzee":
             if max(value_counts.values()) == 6:
@@ -133,15 +146,22 @@ class Scorecard:
         if self.scores[category] is not None:
             return False
         self.scores[category] = self.calculate_score(category, dice)
+        
         return True
     
     def get_total(self) -> int:
-        return sum(score for score in self.scores.values() if score is not None)
-    
+        base_total = sum(score for score in self.scores.values() if score is not None)
+        self.check_upper_bonus()
+        bonus = 50 if self.upper_bonus else 0
+        return base_total + bonus
+        
     def to_dict(self):
         return {
             "scores": self.scores,
-            "total": self.get_total()
+            "total": self.get_total(),
+            "upper_section_total": self.get_upper_section_total(),
+            "upper_bonus": self.upper_bonus,
+            "upper_bonus_threshold": 73
         }
 
 class Game:
