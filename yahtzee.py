@@ -168,15 +168,13 @@ class Game:
     def __init__(self):
         self.dice = [Die() for _ in range(6)]
         self.rolls_left = 3
-        self.saved_rolls = 0
         self.scorecard = Scorecard()
         self.current_turn_scored = False
         self.game_started = False
-        
     
     def roll_dice(self) -> bool:
         self.game_started = True
-        if self.current_turn_scored:  # reset everything on new roll after scoring
+        if self.current_turn_scored:  # Reset everything on new roll after scoring
             self.rolls_left = 3
             self.current_turn_scored = False
             for die in self.dice:
@@ -186,11 +184,6 @@ class Game:
             for die in self.dice:
                 die.roll()
             self.rolls_left -= 1
-            return True
-        elif self.saved_rolls > 0:
-            for die in self.dice:
-                die.roll()
-            self.saved_rolls -= 1
             return True
         return False
     
@@ -206,10 +199,6 @@ class Game:
             
         if self.current_turn_scored:
             return "turn_scored"
-            
-        if self.rolls_left > 0:
-            self.saved_rolls += self.rolls_left
-            
         success = self.scorecard.score_category(category, self.dice)
         if success:
             self.current_turn_scored = True
@@ -223,7 +212,6 @@ class Game:
         return {
             "dice": [die.to_dict() for die in self.dice],
             "rolls_left": self.rolls_left,
-            "saved_rolls": self.saved_rolls,
             "scorecard": self.scorecard.to_dict()
         }
 

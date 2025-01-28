@@ -64,7 +64,6 @@
         <button onclick="startNewGame()">New Game</button>
         <button onclick="rollDice()">Roll Dice</button>
         <span id="rolls-left"></span>
-		<span id="saved-rolls" style="margin-left: 10px"></span>
     </div>
 
     <div id="dice-container"></div>
@@ -125,10 +124,9 @@
                 diceContainer.appendChild(dieElement);
             });
 
-			// Update rolls left displays
-			document.getElementById('rolls-left').textContent = `Rolls left: ${game.rolls_left}`;
-			document.getElementById('saved-rolls').textContent = game.saved_rolls > 0 ? `(+ ${game.saved_rolls} saved rolls)` : '';
-
+            // Update rolls left
+            document.getElementById('rolls-left').textContent = 
+                `Rolls left: ${game.rolls_left}`;
 
             // Update scorecard
             for (const [category, score] of Object.entries(game.scorecard.scores)) {
