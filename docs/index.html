@@ -100,7 +100,7 @@
         let gameId = null;
 
         async function startNewGame() {
-            const response = await fetch('https://yahtzee-ae8p.onrender.com/game/new', {
+            const response = await fetch('https://yahtzee-9xo5.onrender.com/game/new', {
                 method: 'POST'
             });
             const data = await response.json();
@@ -111,7 +111,7 @@
         async function updateGameState() {
             if (gameId === null) return;
             
-            const response = await fetch(`https://yahtzee-ae8p.onrender.com/game/${gameId}`);
+            const response = await fetch(`https://yahtzee-9xo5.onrender.com/game/${gameId}`);
             const game = await response.json();
             
             // Update dice
@@ -155,7 +155,7 @@
         async function rollDice() {
             if (gameId === null) return;
             
-            const response = await fetch(`https://yahtzee-ae8p.onrender.com/game/${gameId}/roll`, {
+            const response = await fetch(`https://yahtzee-9xo5.onrender.com/game/${gameId}/roll`, {
                 method: 'POST'
             });
             if (response.ok) {
@@ -168,7 +168,7 @@
         async function toggleHold(dieIndex) {
             if (gameId === null) return;
             
-            const response = await fetch(`https://yahtzee-ae8p.onrender.com/game/${gameId}/hold/${dieIndex}`, {
+            const response = await fetch(`https://yahtzee-9xo5.onrender.com/game/${gameId}/hold/${dieIndex}`, {
                 method: 'POST'
             });
             if (response.ok) {
@@ -179,7 +179,7 @@
 		async function score(category) {
 			if (gameId === null) return;
 			
-			const response = await fetch(`https://yahtzee-ae8p.onrender.com/game/${gameId}/score/${category}`, {
+			const response = await fetch(`https://yahtzee-9xo5.onrender.com/game/${gameId}/score/${category}`, {
 				method: 'POST'
 			});
 			const data = await response.json();
