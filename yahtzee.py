@@ -234,7 +234,9 @@ class Game:
             "dice": [die.to_dict() for die in self.dice],
             "rolls_left": self.rolls_left,
             "saved_rolls": self.saved_rolls,
-            "scorecard": self.scorecard.to_dict()
+            "scorecard": self.scorecard.to_dict(),
+            "current_turn_scored": self.current_turn_scored,
+            "game_started": self.game_started
         }
 
 app = Flask(__name__)
