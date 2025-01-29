@@ -115,6 +115,16 @@ class Scorecard:
                 else:
                     return 2*candidates[0][0] + 3*candidates[1][0]
               
+            elif 3 in value_counts.values():
+                candidates = [(value, count) for value, count in value_counts.items() if count >= 3]
+                
+                if len(candidates) <= 1:
+                    return 0
+                
+                candidates.sort(reverse = True)
+                
+                return 3*candidates[0][0] + 2*candidates[1][0]
+                
             return 0
             
         
