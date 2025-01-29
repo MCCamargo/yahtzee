@@ -69,8 +69,6 @@ class Scorecard:
             return sum(v for v in values if v == number)
         
         
-        # problem in scoring full house
-        
         elif category == "pair":
             if max(value_counts.values()) >= 2:
                 for i in range(6,0, -1):
@@ -102,7 +100,6 @@ class Scorecard:
                         return 4*i
             return 0
         
-        # change to actual score?
         elif category == "full_house":
             if 2 in value_counts.values() and 3 in value_counts.values():
                 
@@ -131,9 +128,9 @@ class Scorecard:
                 candidates.sort(reverse = True)
                 
                 if candidates[0][1] == 2:
-                    return 2*candidates[0] + 3*candidates[1]
+                    return 2*candidates[0][0] + 3*candidates[1][0]
                 elif candidates[0][1] == 4:
-                    return 3*candidates[0] + 2*candidates[1]                
+                    return 3*candidates[0][0] + 2*candidates[1][0]                
                 
             return 0
             
