@@ -55,6 +55,10 @@
 		.held {
 			background-color: #ffcccc;
 		}
+		.die.inactive {
+			background-color: #4d4d4f;
+			cursor: not-allowed;
+		}
     </style>
 </head>
 <body>
@@ -112,48 +116,54 @@
             updateGameState();
         }
 
-        async function updateGameState() {
-            if (gameId === null) return;
-            
-            const response = await fetch(`https://yahtzee-9xo5.onrender.com/game/${gameId}`);
-            const game = await response.json();
-            
-            // Update dice
-            const diceContainer = document.getElementById('dice-container');
-            diceContainer.innerHTML = '';
-            game.dice.forEach((die, index) => {
-                const dieElement = document.createElement('div');
-                dieElement.className = `die ${die.held ? 'held' : ''}`;
-                dieElement.textContent = die.value;
-                dieElement.onclick = () => toggleHold(index);
-                diceContainer.appendChild(dieElement);
-            });
+		async function updateGameState() {
+			if (gameId === null) return;
+			
+			const response = await fetch(`https://yahtzee-9xo5.onrender.com/game/${gameId}`);
+			const game = await response.json();
+			
+			// Update dice
+			const diceContainer = document.getElementById('dice-container');
+			diceContainer.innerHTML = '';
+			game.dice.forEach((die, index) => {
+				const dieElement = document.createElement('div');
+				dieElement.className = `die ${die.held ? 'held' : ''} ${(game.current_turn_scored || !game.game_started) ? 'inactive' : ''}`;
+				dieElement.textContent = die.value;
+				dieElement.onclick = () => {
+					if (game.current_turn_scored || !game.game_started) {
+						alert('Tira los dados para una nueva ronda.');  // for Spanish version
+						// alert('Roll dice for a new turn!');  // for English version
+						return;
+					}
+					toggleHold(index);
+				};
+				diceContainer.appendChild(dieElement);
+			});
 
 			// Update rolls left displays
 			document.getElementById('rolls-left').textContent = `Tiradas restantes: ${game.rolls_left}`;
 			document.getElementById('saved-rolls').textContent = game.saved_rolls > 0 ? `(+ ${game.saved_rolls} tiradas guardadas)` : '';
 
-
-            // Update scorecard
-            for (const [category, score] of Object.entries(game.scorecard.scores)) {
-                const element = document.getElementById(`score-${category}`);
-                if (element) {
-                    element.textContent = score !== null ? score : '';
-                    const row = element.parentElement;
-                    if (score !== null) {
-                        row.querySelector('.category').classList.add('scored');
-                    } else {
-                        row.querySelector('.category').classList.remove('scored');
-                    }
-                }
-            }
-            document.getElementById('score-total').textContent = game.scorecard.total;
+			// Update scorecard
+			for (const [category, score] of Object.entries(game.scorecard.scores)) {
+				const element = document.getElementById(`score-${category}`);
+				if (element) {
+					element.textContent = score !== null ? score : '';
+					const row = element.parentElement;
+					if (score !== null) {
+						row.querySelector('.category').classList.add('scored');
+					} else {
+						row.querySelector('.category').classList.remove('scored');
+					}
+				}
+			}
+			document.getElementById('score-total').textContent = game.scorecard.total;
 			document.getElementById('upper-section-total').textContent = game.scorecard.upper_section_total;
 			
 			const bonusElement = document.getElementById('upper-bonus');
 			bonusElement.textContent = game.scorecard.upper_bonus ? '50' : '0';
 			bonusElement.className = game.scorecard.upper_bonus ? 'bonus-achieved' : 'bonus-pending';
-        }
+		}
 			
 
         async function rollDice() {

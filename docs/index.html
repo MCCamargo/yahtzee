@@ -137,7 +137,8 @@
 				dieElement.textContent = die.value;
 				dieElement.onclick = () => {
 					if (game.current_turn_scored || !game.game_started) {
-						alert('Tira los dados para una nueva ronda');  // for Spanish version
+						// alert('Tira los dados para una nueva ronda');  // for Spanish version
+						alert('Roll dice for a new turn!');  // for English version
 						return;
 					}
 					toggleHold(index);
