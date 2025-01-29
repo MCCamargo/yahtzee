@@ -60,14 +60,18 @@
 <body>
     <h1>Yatzi</h1>
     
-    <div id="game-controls">
-        <button onclick="startNewGame()">Nueva partida</button>
-        <button onclick="rollDice()">Tirar los dados</button>
-        <span id="rolls-left"></span>
-		<span id="saved-rolls" style="margin-left: 10px"></span>
-    </div>
+	<div id="game-controls">
+		<button onclick="startNewGame()">Nueva partida</button>
+	</div>
 
-    <div id="dice-container"></div>
+	<div id="dice-container"></div>
+	<p style="margin: 5px 0">Haz clic en un dado para retenerlo</p>
+
+	<div id="roll-controls" style="margin: 10px 0">
+		<button onclick="rollDice()">Tirar los dados</button>
+		<span id="rolls-left"></span>
+		<span id="saved-rolls" style="margin-left: 10px"></span>
+	</div>
 
     <h2>Puntaje</h2>
     <table class="scorecard-table">
