@@ -53,19 +53,34 @@
 		cursor: pointer;
 		}
 		.held {
-			background-color: #ffcccc;
+			background-color: #ffcccc;	
 		}
+		.die.inactive {
+			background-color: #f0f0f0;
+			cursor: not-allowed;
+		}
+		
+		
+		
+		
+		
     </style>
 </head>
 <body>
     <h1>Yahtzee</h1>
     
     <div id="game-controls">
-        <button onclick="startNewGame()">New Game</button>
-        <button onclick="rollDice()">Roll Dice</button>
-        <span id="rolls-left"></span>
+		<button onclick="startNewGame()">New Game</button>
+	</div>
+
+	<div id="dice-container"></div>
+	<p style="margin: 5px 0">Click on a die to hold it.</p>
+
+	<div id="roll-controls" style="margin: 10px 0">
+		<button onclick="rollDice()">Roll dice</button>
+		<span id="rolls-left"></span>
 		<span id="saved-rolls" style="margin-left: 10px"></span>
-    </div>
+	</div>
 
     <div id="dice-container"></div>
 
@@ -114,16 +129,24 @@
             const response = await fetch(`https://yahtzee-9xo5.onrender.com/game/${gameId}`);
             const game = await response.json();
             
-            // Update dice
-            const diceContainer = document.getElementById('dice-container');
-            diceContainer.innerHTML = '';
-            game.dice.forEach((die, index) => {
-                const dieElement = document.createElement('div');
-                dieElement.className = `die ${die.held ? 'held' : ''}`;
-                dieElement.textContent = die.value;
-                dieElement.onclick = () => toggleHold(index);
-                diceContainer.appendChild(dieElement);
-            });
+			// Update dice
+			const diceContainer = document.getElementById('dice-container');
+			diceContainer.innerHTML = '';
+			game.dice.forEach((die, index) => {
+				const dieElement = document.createElement('div');
+				// Add 'inactive' class if we've scored this turn
+				dieElement.className = `die ${die.held ? 'held' : ''} ${game.current_turn_scored ? 'inactive' : ''}`;
+				dieElement.textContent = die.value;
+				dieElement.onclick = () => {
+					if (game.current_turn_scored) {
+						// alert('Tira los dados para una nueva ronda');  // Spanish version
+						alert('Roll again for a new turn');  // English version
+						return;
+					}
+					toggleHold(index);
+				};
+				diceContainer.appendChild(dieElement);
+			});
 
 			// Update rolls left displays
 			document.getElementById('rolls-left').textContent = `Rolls left: ${game.rolls_left}`;

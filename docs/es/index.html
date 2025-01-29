@@ -65,7 +65,7 @@
 	</div>
 
 	<div id="dice-container"></div>
-	<p style="margin: 5px 0">Haz clic en un dado para retenerlo</p>
+	<p style="margin: 5px 0">Haz clic en un dado para retenerlo.</p>
 
 	<div id="roll-controls" style="margin: 10px 0">
 		<button onclick="rollDice()">Tirar los dados</button>
@@ -196,7 +196,13 @@
 				}
 				updateGameState();
 			} else {
-				alert(data.error);
+				// Add error message translations
+				const errorTranslations = {
+					"Roll the dice to start!": "¡Tira los dados para empezar!",
+					"You already scored this turn! Roll again for a new turn.": "¡Ya anotaste en esta ronda! Tira los dados para empezar una nueva ronda.",
+					"This category has already been scored": "Ya anotaste en esta categoría."
+				};
+				alert(errorTranslations[data.error] || data.error);
 			}
 		}
         // Start a new game when the page loads
