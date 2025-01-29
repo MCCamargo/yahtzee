@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Yatzi</title>
+    <style>
+        .scorecard-table {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 500px;
+            margin: 20px 0;
+        }
+        
+        .scorecard-table td {
+            padding: 8px;
+            border: 1px solid #ddd;
+        }
+        
+        .category {
+            cursor: pointer;
+            background-color: #f5f5f5;
+        }
+        
+        .scored {
+            background-color: #e0e0e0;
+            cursor: not-allowed;
+        }
+        
+        .bonus-row td {
+            background-color: #e3f2fd;
+            font-weight: 500;
+        }
+        
+        .total-row td {
+            background-color: #1976d2;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        .upper-section-total td {
+            background-color: #f3f3f3;
+            font-style: italic;
+        }
+		.die {
+		width: 60px;
+		height: 60px;
+		border: 2px solid black;
+		margin: 5px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 24px;
+		cursor: pointer;
+		}
+		.held {
+			background-color: #ffcccc;
+		}
+    </style>
+</head>
+<body>
+    <h1>Yatzi</h1>
+    
+    <div id="game-controls">
+        <button onclick="startNewGame()">Nueva partida</button>
+        <button onclick="rollDice()">Tirar los dados</button>
+        <span id="rolls-left"></span>
+		<span id="saved-rolls" style="margin-left: 10px"></span>
+    </div>
+
+    <div id="dice-container"></div>
+
+    <h2>Puntaje</h2>
+    <table class="scorecard-table">
+        <!-- Upper section -->
+        <tr><td class="category" onclick="score('ones')">Unos</td><td id="score-ones"></td></tr>
+        <tr><td class="category" onclick="score('twos')">Doses</td><td id="score-twos"></td></tr>
+        <tr><td class="category" onclick="score('threes')">Treses</td><td id="score-threes"></td></tr>
+        <tr><td class="category" onclick="score('fours')">Cuatros</td><td id="score-fours"></td></tr>
+        <tr><td class="category" onclick="score('fives')">Cincos</td><td id="score-fives"></td></tr>
+        <tr><td class="category" onclick="score('sixes')">Seises</td><td id="score-sixes"></td></tr>
+        <tr class="upper-section-total"><td>Subtotal sección superior</td><td id="upper-section-total"></td></tr>
+        <tr class="bonus-row"><td>Bono sección superior (≥73)</td><td id="upper-bonus"></td></tr>
+        
+        <!-- Lower section -->
+        <tr><td class="category" onclick="score('pair')">Par</td><td id="score-pair"></td></tr>
+        <tr><td class="category" onclick="score('two_pair')">Doble par</td><td id="score-two_pair"></td></tr>
+        <tr><td class="category" onclick="score('three_of_a_kind')">Tres iguales</td><td id="score-three_of_a_kind"></td></tr>
+        <tr><td class="category" onclick="score('four_of_a_kind')">Cuatro iguales</td><td id="score-four_of_a_kind"></td></tr>
+        <tr><td class="category" onclick="score('full_house')">Full house</td><td id="score-full_house"></td></tr>
+        <tr><td class="category" onclick="score('small_straight')">Escalera pequeña</td><td id="score-small_straight"></td></tr>
+        <tr><td class="category" onclick="score('large_straight')">Escalera grande</td><td id="score-large_straight"></td></tr>
+        <tr><td class="category" onclick="score('yahtzee')">Yatzi</td><td id="score-yahtzee"></td></tr>
+        <tr><td class="category" onclick="score('chance')">Sumatoria</td><td id="score-chance"></td></tr>
+        
+        <!-- Total -->
+        <tr class="total-row"><td>Puntaje total</td><td id="score-total"></td></tr>
+    </table>
+
+    <script>
+        let gameId = null;
+
+        async function startNewGame() {
+            const response = await fetch('https://yahtzee-9xo5.onrender.com/game/new', {
+                method: 'POST'
+            });
+            const data = await response.json();
+            gameId = data.game_id;
+            updateGameState();
+        }
+
+        async function updateGameState() {
+            if (gameId === null) return;
+            
+            const response = await fetch(`https://yahtzee-9xo5.onrender.com/game/${gameId}`);
+            const game = await response.json();
+            
+            // Update dice
+            const diceContainer = document.getElementById('dice-container');
+            diceContainer.innerHTML = '';
+            game.dice.forEach((die, index) => {
+                const dieElement = document.createElement('div');
+                dieElement.className = `die ${die.held ? 'held' : ''}`;
+                dieElement.textContent = die.value;
+                dieElement.onclick = () => toggleHold(index);
+                diceContainer.appendChild(dieElement);
+            });
+
+			// Update rolls left displays
+			document.getElementById('rolls-left').textContent = `Tiradas restantes: ${game.rolls_left}`;
+			document.getElementById('saved-rolls').textContent = game.saved_rolls > 0 ? `(+ ${game.saved_rolls} tiradas guardadas)` : '';
+
+
+            // Update scorecard
+            for (const [category, score] of Object.entries(game.scorecard.scores)) {
+                const element = document.getElementById(`score-${category}`);
+                if (element) {
+                    element.textContent = score !== null ? score : '';
+                    const row = element.parentElement;
+                    if (score !== null) {
+                        row.querySelector('.category').classList.add('scored');
+                    } else {
+                        row.querySelector('.category').classList.remove('scored');
+                    }
+                }
+            }
+            document.getElementById('score-total').textContent = game.scorecard.total;
+			document.getElementById('upper-section-total').textContent = game.scorecard.upper_section_total;
+			
+			const bonusElement = document.getElementById('upper-bonus');
+			bonusElement.textContent = game.scorecard.upper_bonus ? '50' : '0';
+			bonusElement.className = game.scorecard.upper_bonus ? 'bonus-achieved' : 'bonus-pending';
+        }
+			
+
+        async function rollDice() {
+            if (gameId === null) return;
+            
+            const response = await fetch(`https://yahtzee-9xo5.onrender.com/game/${gameId}/roll`, {
+                method: 'POST'
+            });
+            if (response.ok) {
+                updateGameState();
+            } else {
+                alert('¡No tienes más tiradas!');
+            }
+        }
+
+        async function toggleHold(dieIndex) {
+            if (gameId === null) return;
+            
+            const response = await fetch(`https://yahtzee-9xo5.onrender.com/game/${gameId}/hold/${dieIndex}`, {
+                method: 'POST'
+            });
+            if (response.ok) {
+                updateGameState();
+            }
+        }
+
+		async function score(category) {
+			if (gameId === null) return;
+			
+			const response = await fetch(`https://yahtzee-9xo5.onrender.com/game/${gameId}/score/${category}`, {
+				method: 'POST'
+			});
+			const data = await response.json();
+			console.log("Response from server:", data);  // Debug log
+			
+			if (response.ok) {
+				if (data.game_over) {
+					console.log("Game is over!");  // Debug log
+					alert(`¡Juego acabado! Tu puntaje final es: ${data.final_score}`);
+				}
+				updateGameState();
+			} else {
+				alert(data.error);
+			}
+		}
+        // Start a new game when the page loads
+        startNewGame();
+    </script>
+</body>
+</html>
