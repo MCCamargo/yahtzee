@@ -247,13 +247,24 @@ class Game:
         }
 
 app = Flask(__name__)
+from flask_cors import CORS
+
 CORS(app, resources={
     r"/*": {
-        "origins": ["https://mccamargo.github.io"],
+        "origins": [
+            "https://mccamargo.github.io",
+            "http://localhost:3000",
+            "http://localhost:3001",
+            "http://localhost:5000",
+            "http://localhost:8000",
+            "http://127.0.0.1:8000",
+            "http://127.0.0.1:5000",
+        ],
         "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type"]
+        "allow_headers": ["Content-Type"],
     }
 })
+
 
 # Store active games (in a real app, this would be a database)
 games = {}

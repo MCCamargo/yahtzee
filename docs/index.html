@@ -111,112 +111,112 @@
         <tr class="total-row"><td>Total</td><td id="score-total"></td></tr>
     </table>
 
-    <script>
-        let gameId = null;
+	<script>
+	  // Pick local API when running from localhost/127.0.0.1; otherwise use production
+	  const API_BASE =
+		(location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+		  ? 'http://127.0.0.1:5000'
+		  : 'https://yahtzee-9xo5.onrender.com';
 
-        async function startNewGame() {
-            const response = await fetch('https://yahtzee-9xo5.onrender.com/game/new', {
-                method: 'POST'
-            });
-            const data = await response.json();
-            gameId = data.game_id;
-            updateGameState();
-        }
-		async function updateGameState() {
-			if (gameId === null) return;
-			
-			const response = await fetch(`https://yahtzee-9xo5.onrender.com/game/${gameId}`);
-			const game = await response.json();
-			
-			// Update dice
-			const diceContainer = document.getElementById('dice-container');
-			diceContainer.innerHTML = '';
-			game.dice.forEach((die, index) => {
-				const dieElement = document.createElement('div');
-				dieElement.className = `die ${die.held ? 'held' : ''} ${(game.current_turn_scored || !game.game_started) ? 'inactive' : ''}`;
-				dieElement.textContent = die.value;
-				dieElement.onclick = () => {
-					if (game.current_turn_scored || !game.game_started) {
-						// alert('Tira los dados para una nueva ronda');  // for Spanish version
-						alert('Roll dice for a new turn!');  // for English version
-						return;
-					}
-					toggleHold(index);
-				};
-				diceContainer.appendChild(dieElement);
-			});
+	  let gameId = null;
 
-			// Update rolls left displays
-			document.getElementById('rolls-left').textContent = `Tiradas restantes: ${game.rolls_left}`;
-			document.getElementById('saved-rolls').textContent = game.saved_rolls > 0 ? `(+ ${game.saved_rolls} tiradas guardadas)` : '';
+	  async function startNewGame() {
+		const response = await fetch(`${API_BASE}/game/new`, { method: 'POST' });
+		const data = await response.json();
+		gameId = data.game_id;
+		updateGameState();
+	  }
 
-			// Update scorecard
-			for (const [category, score] of Object.entries(game.scorecard.scores)) {
-				const element = document.getElementById(`score-${category}`);
-				if (element) {
-					element.textContent = score !== null ? score : '';
-					const row = element.parentElement;
-					if (score !== null) {
-						row.querySelector('.category').classList.add('scored');
-					} else {
-						row.querySelector('.category').classList.remove('scored');
-					}
-				}
+	  async function updateGameState() {
+		if (gameId === null) return;
+
+		const response = await fetch(`${API_BASE}/game/${gameId}`);
+		const game = await response.json();
+
+		// Update dice
+		const diceContainer = document.getElementById('dice-container');
+		diceContainer.innerHTML = '';
+		game.dice.forEach((die, index) => {
+		  const dieElement = document.createElement('div');
+		  dieElement.className = `die ${die.held ? 'held' : ''} ${(game.current_turn_scored || !game.game_started) ? 'inactive' : ''}`;
+		  dieElement.textContent = die.value;
+		  dieElement.onclick = () => {
+			if (game.current_turn_scored || !game.game_started) {
+			  // alert('Tira los dados para una nueva ronda');  // Spanish
+			  alert('Roll dice for a new turn!');               // English
+			  return;
 			}
-			document.getElementById('score-total').textContent = game.scorecard.total;
-			document.getElementById('upper-section-total').textContent = game.scorecard.upper_section_total;
-			
-			const bonusElement = document.getElementById('upper-bonus');
-			bonusElement.textContent = game.scorecard.upper_bonus ? '50' : '0';
-			bonusElement.className = game.scorecard.upper_bonus ? 'bonus-achieved' : 'bonus-pending';
-		}
-			
+			toggleHold(index);
+		  };
+		  diceContainer.appendChild(dieElement);
+		});
 
-        async function rollDice() {
-            if (gameId === null) return;
-            
-            const response = await fetch(`https://yahtzee-9xo5.onrender.com/game/${gameId}/roll`, {
-                method: 'POST'
-            });
-            if (response.ok) {
-                updateGameState();
-            } else {
-                alert('No rolls left!');
-            }
-        }
+		// Update rolls left displays
+		document.getElementById('rolls-left').textContent = `Tiradas restantes: ${game.rolls_left}`;
+		document.getElementById('saved-rolls').textContent = game.saved_rolls > 0 ? `(+ ${game.saved_rolls} tiradas guardadas)` : '';
 
-        async function toggleHold(dieIndex) {
-            if (gameId === null) return;
-            
-            const response = await fetch(`https://yahtzee-9xo5.onrender.com/game/${gameId}/hold/${dieIndex}`, {
-                method: 'POST'
-            });
-            if (response.ok) {
-                updateGameState();
-            }
-        }
-
-		async function score(category) {
-			if (gameId === null) return;
-			
-			const response = await fetch(`https://yahtzee-9xo5.onrender.com/game/${gameId}/score/${category}`, {
-				method: 'POST'
-			});
-			const data = await response.json();
-			console.log("Response from server:", data);  // Debug log
-			
-			if (response.ok) {
-				if (data.game_over) {
-					console.log("Game is over!");  // Debug log
-					alert(`Game Over! Your final score is: ${data.final_score}`);
-				}
-				updateGameState();
+		// Update scorecard
+		for (const [category, score] of Object.entries(game.scorecard.scores)) {
+		  const element = document.getElementById(`score-${category}`);
+		  if (element) {
+			element.textContent = score !== null ? score : '';
+			const row = element.parentElement;
+			if (score !== null) {
+			  row.querySelector('.category').classList.add('scored');
 			} else {
-				alert(data.error);
+			  row.querySelector('.category').classList.remove('scored');
 			}
+		  }
 		}
-        // Start a new game when the page loads
-        startNewGame();
-    </script>
+		document.getElementById('score-total').textContent = game.scorecard.total;
+		document.getElementById('upper-section-total').textContent = game.scorecard.upper_section_total;
+
+		const bonusElement = document.getElementById('upper-bonus');
+		bonusElement.textContent = game.scorecard.upper_bonus ? '50' : '0';
+		bonusElement.className = game.scorecard.upper_bonus ? 'bonus-achieved' : 'bonus-pending';
+	  }
+
+	  async function rollDice() {
+		if (gameId === null) return;
+
+		const response = await fetch(`${API_BASE}/game/${gameId}/roll`, { method: 'POST' });
+		if (response.ok) {
+		  updateGameState();
+		} else {
+		  alert('No rolls left!');
+		}
+	  }
+
+	  async function toggleHold(dieIndex) {
+		if (gameId === null) return;
+
+		const response = await fetch(`${API_BASE}/game/${gameId}/hold/${dieIndex}`, { method: 'POST' });
+		if (response.ok) {
+		  updateGameState();
+		}
+	  }
+
+	  async function score(category) {
+		if (gameId === null) return;
+
+		const response = await fetch(`${API_BASE}/game/${gameId}/score/${category}`, { method: 'POST' });
+		const data = await response.json();
+		console.log("Response from server:", data);  // Debug log
+
+		if (response.ok) {
+		  if (data.game_over) {
+			console.log("Game is over!");  // Debug log
+			alert(`Game Over! Your final score is: ${data.final_score}`);
+		  }
+		  updateGameState();
+		} else {
+		  alert(data.error);
+		}
+	  }
+
+	  // Start a new game when the page loads
+	  startNewGame();
+	</script>
+
 </body>
 </html>
