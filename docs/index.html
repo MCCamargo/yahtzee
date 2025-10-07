@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Yahtzee Game</title>
     <style>
@@ -66,6 +67,7 @@
 		
     </style>
 </head>
+
 <body>
     <h1>Yahtzee</h1>
     
@@ -112,10 +114,13 @@
     </table>
 
     <script>
+	
+		const BASE_URL = 'http://localhost:5000'
+		
         let gameId = null;
 
         async function startNewGame() {
-            const response = await fetch('https://yahtzee-9xo5.onrender.com/game/new', {
+            const response = await fetch(`${BASE_URL}/game/new`, {
                 method: 'POST'
             });
             const data = await response.json();
@@ -125,7 +130,7 @@
 		async function updateGameState() {
 			if (gameId === null) return;
 			
-			const response = await fetch(`https://yahtzee-9xo5.onrender.com/game/${gameId}`);
+			const response = await fetch(`${BASE_URL}/game/${gameId}`);
 			const game = await response.json();
 			
 			// Update dice
@@ -175,7 +180,7 @@
         async function rollDice() {
             if (gameId === null) return;
             
-            const response = await fetch(`https://yahtzee-9xo5.onrender.com/game/${gameId}/roll`, {
+            const response = await fetch(`${BASE_URL}/game/${gameId}/roll`, {
                 method: 'POST'
             });
             if (response.ok) {
@@ -188,7 +193,7 @@
         async function toggleHold(dieIndex) {
             if (gameId === null) return;
             
-            const response = await fetch(`https://yahtzee-9xo5.onrender.com/game/${gameId}/hold/${dieIndex}`, {
+            const response = await fetch(`${BASE_URL}/game/${gameId}/hold/${dieIndex}`, {
                 method: 'POST'
             });
             if (response.ok) {
@@ -199,7 +204,7 @@
 		async function score(category) {
 			if (gameId === null) return;
 			
-			const response = await fetch(`https://yahtzee-9xo5.onrender.com/game/${gameId}/score/${category}`, {
+			const response = await fetch(`${BASE_URL}/game/${gameId}/score/${category}`, {
 				method: 'POST'
 			});
 			const data = await response.json();

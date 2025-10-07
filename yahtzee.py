@@ -3,6 +3,25 @@ from flask_cors import CORS
 import random
 from typing import List, Dict
 
+import json
+import os
+from datetime import datetime
+
+LOG_FILE = 'game_logs.jsonl'
+
+def log_game_event(game_id, event_type, data):
+    log_entry = {
+    'timestamp': datetime.utcnow().isoformat(),
+    'game_id': game_id,
+    'event_type': event_type,
+    'data': data
+    }
+
+    os.makedirs('logs', exist_ok = True)
+    
+    with open(os.path.join('logs', LOG_FILE), 'a') as f:
+        f.write(json.dumps(log_entry) + "\n")
+
 class Die:
     def __init__(self):
         self.value = 1
@@ -249,7 +268,7 @@ class Game:
 app = Flask(__name__)
 CORS(app, resources={
     r"/*": {
-        "origins": ["https://mccamargo.github.io"],
+        "origins": ["https://mccamargo.github.io", "http://localhost:3000", "http://localhost:3001", 'http://localhost:5000' ],
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type"]
     }
@@ -262,6 +281,7 @@ games = {}
 def new_game():
     game_id = len(games)
     games[game_id] = Game()
+    log_game_event(game_id, "new_game", games[game_id].to_dict())
     return jsonify({"game_id": game_id})
 
 @app.route('/game/<int:game_id>', methods=['GET'])
@@ -278,6 +298,8 @@ def roll_dice(game_id):
     success = games[game_id].roll_dice()
     if not success:
         return jsonify({"error": "No rolls left"}), 400
+    
+    log_game_event(game_id, 'roll', games[game_id].to_dict())
     
     return jsonify(games[game_id].to_dict())
 
@@ -307,6 +329,13 @@ def score_category(game_id, category):
         return jsonify({"error": "This category has already been scored"}), 400
     
     # Debug logs
+    log_game_event(game_id, "score", {
+                                        "category": category,
+                                        "game_state": game.to_dict()
+                                        })
+
+    
+    
     app.logger.info("Checking if game is over...")
     if game.scorecard.is_game_over():
         app.logger.info("Game is over! Sending final score")
@@ -315,6 +344,11 @@ def score_category(game_id, category):
             "final_score": game.scorecard.get_total(),
             "game_state": game.to_dict()
         }
+        log_game_event(game_id, "game_over", {
+            "final_score": game.scorecard.get_total(),
+            "game_state": game.to_dict()
+        })
+
         app.logger.info(f"Response data: {response_data}")
         return jsonify(response_data)
     
