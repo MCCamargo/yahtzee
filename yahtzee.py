@@ -40,13 +40,24 @@ class Scorecard:
             "yahtzee": None,
             "chance": None
             }
+        self.upper_bonus = False
+        
     def is_game_over(self) -> bool:
         #app.logger.info(f"Checking game over. Scores: {self.scores}")  # Debug log
         is_over = all(score is not None for score in self.scores.values())
         #app.logger.info(f"Game over status: {is_over}")  # Debug log
         return is_over
         
+    def get_upper_section_total(self) -> int:
+        upper_categories = ["ones", "twos", "threes", "fours", "fives", "sixes"]
+        return sum(self.scores[category] or 0 for category in upper_categories)
     
+    def check_upper_bonus(self) -> bool:
+        if not self.upper_bonus and self.get_upper_section_total() >= 73:
+            self.upper_bonus = True
+            return True
+        return False
+        
     def calculate_score(self, category: str, dice: List[Die]) -> int:
         values = [die.value for die in dice]
         value_counts = {i: values.count(i) for i in range(1, 7)}
@@ -54,10 +65,9 @@ class Scorecard:
         
         if category in ["ones", "twos", "threes", "fours", "fives", "sixes"]:
             number = {"ones": 1, "twos": 2, "threes": 3, "fours": 4, "fives": 5, "sixes": 6}[category]
+            
             return sum(v for v in values if v == number)
         
-        
-        # problem in scoring full house
         
         elif category == "pair":
             if max(value_counts.values()) >= 2:
@@ -90,7 +100,6 @@ class Scorecard:
                         return 4*i
             return 0
         
-        # change to actual score?
         elif category == "full_house":
             if 2 in value_counts.values() and 3 in value_counts.values():
                 
@@ -103,6 +112,26 @@ class Scorecard:
                 else:
                     return 2*candidates[0][0] + 3*candidates[1][0]
               
+            elif 3 in value_counts.values():
+                candidates = [(value, count) for value, count in value_counts.items() if count >= 3]
+                
+                if len(candidates) <= 1:
+                    return 0
+                
+                candidates.sort(reverse = True)
+                
+                return 3*candidates[0][0] + 2*candidates[1][0]
+                
+            elif 4 in value_counts.values() and 2 in value_counts.values():
+                candidates = [(value, count) for value, count in value_counts.items() if count >= 2]
+                
+                candidates.sort(reverse = True)
+                
+                if candidates[0][1] == 2:
+                    return 2*candidates[0][0] + 3*candidates[1][0]
+                elif candidates[0][1] == 4:
+                    return 3*candidates[0][0] + 2*candidates[1][0]                
+                
             return 0
             
         
@@ -114,10 +143,11 @@ class Scorecard:
             return 0
         
         elif category == "large_straight":
-            sorted_values = sorted(list(set(values)))
-            if len(sorted_values) >= 5 and sorted_values[0] == 2 and sorted_values[4] == 6:
-                return 20
-            return 0
+            value_set = set(values)
+            for i in range(2,7):
+                if i not in value_set:
+                    return 0
+            return 20
             
         elif category == "yahtzee":
             if max(value_counts.values()) == 6:
@@ -133,28 +163,37 @@ class Scorecard:
         if self.scores[category] is not None:
             return False
         self.scores[category] = self.calculate_score(category, dice)
+        
         return True
     
     def get_total(self) -> int:
-        return sum(score for score in self.scores.values() if score is not None)
-    
+        base_total = sum(score for score in self.scores.values() if score is not None)
+        self.check_upper_bonus()
+        bonus = 50 if self.upper_bonus else 0
+        return base_total + bonus
+        
     def to_dict(self):
         return {
             "scores": self.scores,
-            "total": self.get_total()
+            "total": self.get_total(),
+            "upper_section_total": self.get_upper_section_total(),
+            "upper_bonus": self.upper_bonus,
+            "upper_bonus_threshold": 73
         }
 
 class Game:
     def __init__(self):
         self.dice = [Die() for _ in range(6)]
         self.rolls_left = 3
+        self.saved_rolls = 0
         self.scorecard = Scorecard()
         self.current_turn_scored = False
         self.game_started = False
+        
     
     def roll_dice(self) -> bool:
         self.game_started = True
-        if self.current_turn_scored:  # Reset everything on new roll after scoring
+        if self.current_turn_scored:  # reset everything on new roll after scoring
             self.rolls_left = 3
             self.current_turn_scored = False
             for die in self.dice:
@@ -164,6 +203,11 @@ class Game:
             for die in self.dice:
                 die.roll()
             self.rolls_left -= 1
+            return True
+        elif self.saved_rolls > 0:
+            for die in self.dice:
+                die.roll()
+            self.saved_rolls -= 1
             return True
         return False
     
@@ -179,6 +223,10 @@ class Game:
             
         if self.current_turn_scored:
             return "turn_scored"
+            
+        if self.rolls_left > 0:
+            self.saved_rolls += self.rolls_left
+            
         success = self.scorecard.score_category(category, self.dice)
         if success:
             self.current_turn_scored = True
@@ -192,13 +240,45 @@ class Game:
         return {
             "dice": [die.to_dict() for die in self.dice],
             "rolls_left": self.rolls_left,
-            "scorecard": self.scorecard.to_dict()
+            "saved_rolls": self.saved_rolls,
+            "scorecard": self.scorecard.to_dict(),
+            "current_turn_scored": self.current_turn_scored,
+            "game_started": self.game_started
         }
 
 app = Flask(__name__)
-CORS(app)
+from flask_cors import CORS
+# Allow ALL origins and explicitly allow the “null” origin used by file://
+CORS(
+    app,
+    resources={r"/*": {
+        "origins": ["*", "null"],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type"],
+    }},
+    supports_credentials=False,
+    send_wildcard=True,       # actually send Access-Control-Allow-Origin: *
+)
 
-# Store active games (in a real app, this would be a database)
+# Helpful for any edge cases / 404s still returning without CORS headers
+@app.after_request
+def add_cors_headers(resp):
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+    resp.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    return resp
+    
+    
+@app.route('/', methods=['GET'])
+def root():
+    return jsonify(status="ok"), 200
+
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify(status="ok"), 200
+
+
+# Store active games
 games = {}
 
 @app.route('/game/new', methods=['POST'])
