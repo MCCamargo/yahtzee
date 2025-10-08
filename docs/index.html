@@ -1,222 +1,347 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Yahtzee Game</title>
-    <style>
-        .scorecard-table {
-            border-collapse: collapse;
-            width: 100%;
-            max-width: 500px;
-            margin: 20px 0;
-        }
-        
-        .scorecard-table td {
-            padding: 8px;
-            border: 1px solid #ddd;
-        }
-        
-        .category {
-            cursor: pointer;
-            background-color: #f5f5f5;
-        }
-        
-        .scored {
-            background-color: #e0e0e0;
-            cursor: not-allowed;
-        }
-        
-        .bonus-row td {
-            background-color: #e3f2fd;
-            font-weight: 500;
-        }
-        
-        .total-row td {
-            background-color: #1976d2;
-            color: white;
-            font-weight: bold;
-            font-size: 1.1em;
-        }
-        
-        .upper-section-total td {
-            background-color: #f3f3f3;
-            font-style: italic;
-        }
-		.die {
-		width: 60px;
-		height: 60px;
-		border: 2px solid black;
-		margin: 5px;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 24px;
-		cursor: pointer;
-		}
-		.held {
-			background-color: #ffcccc;	
-		}
-		.die.inactive {
-			background-color: #4d4d4f;
-			cursor: not-allowed;
-		}
-		
-		
-		
-		
-		
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Yahtzee — Sleek UI</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Force side-by-side layout without relying on Tailwind */
+    .scorecard-row { display:flex; gap: 1rem; align-items: stretch; }
+    .scorecard-row > .card { flex:1 1 0; min-width:0; }
+    /* keep existing styles below */
+    /* Fallback grid utility in case Tailwind isn't applying */
+    .twgrid2 { display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+
+    /* Dice pip layout */
+    .pip { width: 10px; height: 10px; border-radius: 9999px; background: currentColor; }
+    .die-face { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); gap: 6px; }
+    .cell { display:flex; align-items:center; justify-content:center; }
+    .die-btn[disabled] { opacity: .5; cursor: not-allowed; }
+  </style>
 </head>
-<body>
-    <h1>Yahtzee</h1>
-    
-    <div id="game-controls">
-		<button onclick="startNewGame()">New Game</button>
-	</div>
-
-	<div id="dice-container"></div>
-	<p style="margin: 5px 0">Click on a die to hold it.</p>
-
-	<div id="roll-controls" style="margin: 10px 0">
-		<button onclick="rollDice()">Roll dice</button>
-		<span id="rolls-left"></span>
-		<span id="saved-rolls" style="margin-left: 10px"></span>
-	</div>
-
-    <div id="dice-container"></div>
-	<p style="margin: 5px 0">Click on a category to score.</p>
-    <h2>Scorecard</h2>
-    <table class="scorecard-table">
-        <!-- Upper section -->
-        <tr><td class="category" onclick="score('ones')">Ones</td><td id="score-ones"></td></tr>
-        <tr><td class="category" onclick="score('twos')">Twos</td><td id="score-twos"></td></tr>
-        <tr><td class="category" onclick="score('threes')">Threes</td><td id="score-threes"></td></tr>
-        <tr><td class="category" onclick="score('fours')">Fours</td><td id="score-fours"></td></tr>
-        <tr><td class="category" onclick="score('fives')">Fives</td><td id="score-fives"></td></tr>
-        <tr><td class="category" onclick="score('sixes')">Sixes</td><td id="score-sixes"></td></tr>
-        <tr class="upper-section-total"><td>Upper Section Total</td><td id="upper-section-total"></td></tr>
-        <tr class="bonus-row"><td>Upper Section Bonus (≥73)</td><td id="upper-bonus"></td></tr>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+  <!-- Header -->
+  <header class="sticky top-0 z-10 backdrop-blur bg-slate-900/80 border-b border-slate-800">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+      <h1 class="text-xl sm:text-2xl font-bold tracking-tight">🎲 Yahtzee</h1>
+      <div class="flex items-center gap-2">
+        <button id="newGameBtn" onclick="startNewGame()">New Game</button>
         
-        <!-- Lower section -->
-        <tr><td class="category" onclick="score('pair')">Pair</td><td id="score-pair"></td></tr>
-        <tr><td class="category" onclick="score('two_pair')">Two Pair</td><td id="score-two_pair"></td></tr>
-        <tr><td class="category" onclick="score('three_of_a_kind')">Three of a Kind</td><td id="score-three_of_a_kind"></td></tr>
-        <tr><td class="category" onclick="score('four_of_a_kind')">Four of a Kind</td><td id="score-four_of_a_kind"></td></tr>
-        <tr><td class="category" onclick="score('full_house')">Full House</td><td id="score-full_house"></td></tr>
-        <tr><td class="category" onclick="score('small_straight')">Small Straight</td><td id="score-small_straight"></td></tr>
-        <tr><td class="category" onclick="score('large_straight')">Large Straight</td><td id="score-large_straight"></td></tr>
-        <tr><td class="category" onclick="score('yahtzee')">Yahtzee</td><td id="score-yahtzee"></td></tr>
-        <tr><td class="category" onclick="score('chance')">Chance</td><td id="score-chance"></td></tr>
-        
-        <!-- Total -->
-        <tr class="total-row"><td>Total</td><td id="score-total"></td></tr>
-    </table>
+      </div>
+    </div>
+  </header>
 
-	<script>
-	  // Pick local API when running from localhost/127.0.0.1; otherwise use production
-	  const API_BASE =
-		(location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-		  ? 'http://127.0.0.1:5000'
-		  : 'https://yahtzee-9xo5.onrender.com';
+  <!-- Content -->
+  <main class="max-w-6xl mx-auto px-4 pb-24">
+    <!-- Status row -->
+    <section class="grid sm:grid-cols-3 gap-3 mt-4">
+      <div class="rounded-2xl border border-slate-800 bg-slate-900 p-4">
+        <div class="text-sm text-slate-400">Rolls left</div>
+        <div id="rollsLeft" class="text-2xl font-semibold">—</div>
+      </div>
+      <div class="rounded-2xl border border-slate-800 bg-slate-900 p-4">
+        <div class="text-sm text-slate-400">Saved rolls</div>
+        <div id="savedRolls" class="text-2xl font-semibold">—</div>
+      </div>
+      <div class="rounded-2xl border border-slate-800 bg-slate-900 p-4">
+        <div class="text-sm text-slate-400">Total score</div>
+        <div id="totalScore" class="text-2xl font-semibold">0</div>
+      </div>
+    </section>
 
-	  let gameId = null;
+    <!-- Dice -->
+    <section class="mt-6">
+      <div class="flex items-start justify-between mb-2">
+        <h2 class="text-lg font-semibold">Dice</h2>
+        <p class="text-sm text-slate-400">Click a die to hold or release it</p>
+      </div>
+      <div id="diceRow" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3"></div>
+    </section>
 
-	  async function startNewGame() {
-		const response = await fetch(`${API_BASE}/game/new`, { method: 'POST' });
-		const data = await response.json();
-		gameId = data.game_id;
-		updateGameState();
-	  }
+    <!-- Roll button under dice -->
+    <section class="mt-4">
+      <div class="flex justify-center">
+        <div class="flex items-center gap-3">
+          <button id="rollBtn" class="px-6 py-3 rounded-2xl bg-indigo-500 hover:bg-indigo-400 text-white font-semibold shadow disabled:opacity-50">Roll</button>
+          <span id="rollNote" class="text-rose-300 text-sm font-medium hidden">Out of rolls</span>
+        </div>
+      </div>
+    </section>
 
-	  async function updateGameState() {
-		if (gameId === null) return;
+    <section class="mt-8">
+      <h2 class="text-lg font-semibold mb-3">Scorecard</h2>
+      <div class="scorecard-row">
+        <div class="card rounded-2xl border border-slate-800 bg-slate-900 overflow-hidden">
+          <div class="px-4 py-2 bg-slate-800/60 text-slate-300 text-sm">Upper Section</div>
+          <div id="upperList" class="divide-y divide-slate-800"></div>
+          <div class="px-4 py-3 grid grid-cols-2 gap-2 text-sm bg-slate-900/60">
+            <div class="text-slate-400">Upper subtotal</div>
+            <div id="upperSubtotal" class="text-right">0</div>
+            <div class="text-slate-400">Upper bonus (≥ 73)</div>
+            <div id="upperBonus" class="text-right">0</div>
+          </div>
+          <!-- Highlighted Upper Section Total -->
+          <div class="px-4 py-3 border-t border-indigo-700/40 bg-indigo-900/30">
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-indigo-200">Upper section total</span>
+              <span id="upperSectionTotal" class="font-bold text-indigo-300">0</span>
+            </div>
+          </div>
+        </div>
+        <div class="card rounded-2xl border border-slate-800 bg-slate-900 overflow-hidden">
+          <div class="px-4 py-2 bg-slate-800/60 text-slate-300 text-sm">Lower Section</div>
+          <div id="lowerList" class="divide-y divide-slate-800"></div>
+          <!-- Highlighted Lower Section Total -->
+          <div class="px-4 py-3 border-t border-emerald-700/40 bg-emerald-900/20">
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-emerald-200">Lower section total</span>
+              <span id="lowerSectionTotal" class="font-bold text-emerald-300">0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
 
-		const response = await fetch(`${API_BASE}/game/${gameId}`);
-		const game = await response.json();
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 hidden">
+    <div class="rounded-xl bg-slate-800 border border-slate-700 px-4 py-2 text-sm shadow">
+      <span id="toastMsg">Message</span>
+    </div>
+  </div>
 
-		// Update dice
-		const diceContainer = document.getElementById('dice-container');
-		diceContainer.innerHTML = '';
-		game.dice.forEach((die, index) => {
-		  const dieElement = document.createElement('div');
-		  dieElement.className = `die ${die.held ? 'held' : ''} ${(game.current_turn_scored || !game.game_started) ? 'inactive' : ''}`;
-		  dieElement.textContent = die.value;
-		  dieElement.onclick = () => {
-			if (game.current_turn_scored || !game.game_started) {
-			  // alert('Tira los dados para una nueva ronda');  // Spanish
-			  alert('Roll dice for a new turn!');               // English
-			  return;
-			}
-			toggleHold(index);
-		  };
-		  diceContainer.appendChild(dieElement);
-		});
+  <!-- Game Over Modal -->
+  <div id="gameOverModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="w-full max-w-sm rounded-2xl bg-slate-900 border border-slate-800 p-6 text-center">
+      <h3 class="text-xl font-bold mb-2">Game Over</h3>
+      <p class="text-slate-300 mb-6">Your final score: <span id="finalScore" class="font-semibold">0</span></p>
+      <div class="flex gap-2 justify-center">
+        <button id="closeModalBtn" onclick="document.getElementById('gameOverModal').classList.add('hidden');document.getElementById('gameOverModal').classList.remove('flex');">Close</button>
+        <button id="playAgainBtn" onclick="document.getElementById('gameOverModal').classList.add('hidden');document.getElementById('gameOverModal').classList.remove('flex');startNewGame();">Play again</button>
+      </div>
+    </div>
+  </div>
 
-		// Update rolls left displays
-		document.getElementById('rolls-left').textContent = `Tiradas restantes: ${game.rolls_left}`;
-		document.getElementById('saved-rolls').textContent = game.saved_rolls > 0 ? `(+ ${game.saved_rolls} tiradas guardadas)` : '';
+  <script>
+// LOCAL-ONLY SCRIPT (ES5) — fully re-written to avoid syntax pitfalls
+(function(){
+  'use strict';
 
-		// Update scorecard
-		for (const [category, score] of Object.entries(game.scorecard.scores)) {
-		  const element = document.getElementById(`score-${category}`);
-		  if (element) {
-			element.textContent = score !== null ? score : '';
-			const row = element.parentElement;
-			if (score !== null) {
-			  row.querySelector('.category').classList.add('scored');
-			} else {
-			  row.querySelector('.category').classList.remove('scored');
-			}
-		  }
-		}
-		document.getElementById('score-total').textContent = game.scorecard.total;
-		document.getElementById('upper-section-total').textContent = game.scorecard.upper_section_total;
+  // ---- CONFIG ----
+  function parseQS(){
+    var out = {}; var qs = (location.search||'').replace(/^\?/, '').split('&');
+    for (var i=0;i<qs.length;i++){
+      var pair = qs[i]; if (!pair) continue; var kv = pair.split('=');
+      out[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1]||'');
+    }
+    return out;
+  }
+  var QS = parseQS();
+  var CURRENT_BASE = QS.api || 'http://127.0.0.1:5000';
 
-		const bonusElement = document.getElementById('upper-bonus');
-		bonusElement.textContent = game.scorecard.upper_bonus ? '50' : '0';
-		bonusElement.className = game.scorecard.upper_bonus ? 'bonus-achieved' : 'bonus-pending';
-	  }
+  // expose for inline/console
+  window.startNewGame = startNewGame;
+  window.rollDice = rollDice;
+  window.toggleHold = toggleHold;
+  window.scoreCategory = scoreCategory;
 
-	  async function rollDice() {
-		if (gameId === null) return;
+  // ---- UI helpers ----
+  function showToast(msg, ms){
+    ms = ms || 1800;
+    var wrap = document.getElementById('toast');
+    var span = document.getElementById('toastMsg');
+    if (!wrap || !span) return;
+    span.textContent = msg;
+    wrap.classList.remove('hidden');
+    if (wrap._t) { clearTimeout(wrap._t); }
+    wrap._t = setTimeout(function(){ wrap.classList.add('hidden'); }, ms);
+  }
 
-		const response = await fetch(`${API_BASE}/game/${gameId}/roll`, { method: 'POST' });
-		if (response.ok) {
-		  updateGameState();
-		} else {
-		  alert('No rolls left!');
-		}
-	  }
+  function showBanner(msg){
+    var el = document.getElementById('netBanner');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'netBanner';
+      el.className = 'fixed top-2 left-1/2 -translate-x-1/2 z-20 bg-rose-900/40 text-rose-200 border border-rose-700 px-4 py-2 rounded-xl shadow';
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+  }
 
-	  async function toggleHold(dieIndex) {
-		if (gameId === null) return;
+  // ---- networking ----
+  function fetchJson(url, opts){
+    opts = opts || {};
+    var controller = new AbortController();
+    var abortId = setTimeout(function(){ controller.abort(); }, 12000);
+    var headers = opts.headers || {};
+    headers['Content-Type'] = 'application/json';
+    opts.headers = headers;
+    opts.signal = controller.signal;
 
-		const response = await fetch(`${API_BASE}/game/${gameId}/hold/${dieIndex}`, { method: 'POST' });
-		if (response.ok) {
-		  updateGameState();
-		}
-	  }
+    return fetch(url, opts).then(function(res){
+      clearTimeout(abortId);
+      if (!res.ok){
+        return res.text().then(function(t){
+          var msg = t || ('HTTP ' + res.status);
+          try { var j = JSON.parse(t); if (j && j.error) msg = j.error; } catch(e){}
+          var err = new Error(msg); err.http = res.status; throw err;
+        });
+      }
+      return res.json();
+    }).catch(function(e){
+      if (e.name === 'AbortError'){
+        var te = new Error('Network timeout'); te.network = true; throw te;
+      }
+      if (typeof e.http !== 'number'){ e.network = true; }
+      throw e;
+    });
+  }
 
-	  async function score(category) {
-		if (gameId === null) return;
+  function api(path, opts, suppressBanner){
+    return fetchJson(CURRENT_BASE + path, opts).catch(function(err){
+      if (err && err.network && !suppressBanner){ showBanner('Cannot reach local server at ' + CURRENT_BASE); }
+      throw err;
+    });
+  }
 
-		const response = await fetch(`${API_BASE}/game/${gameId}/score/${category}`, { method: 'POST' });
-		const data = await response.json();
-		console.log("Response from server:", data);  // Debug log
+  // ---- state ----
+  var gameId = null;
+  var upperCats = [['ones','Ones'],['twos','Twos'],['threes','Threes'],['fours','Fours'],['fives','Fives'],['sixes','Sixes']];
+  var lowerCats = [['pair','Pair'],['two_pair','Two Pair'],['three_of_a_kind','Three of a Kind'],['four_of_a_kind','Four of a Kind'],['full_house','Full House'],['small_straight','Small Straight'],['large_straight','Large Straight'],['yahtzee','Yahtzee'],['chance','Chance']];
 
-		if (response.ok) {
-		  if (data.game_over) {
-			console.log("Game is over!");  // Debug log
-			alert(`Game Over! Your final score is: ${data.final_score}`);
-		  }
-		  updateGameState();
-		} else {
-		  alert(data.error);
-		}
-	  }
+  // ---- view builders ----
+  function dieFace(value){
+    var posMap = {1:[5],2:[1,9],3:[1,5,9],4:[1,3,7,9],5:[1,3,5,7,9],6:[1,3,4,6,7,9]};
+    var pos = posMap[value] || [5];
+    var grid = document.createElement('div');
+    grid.className = 'die-face';
+    for (var i=1;i<=9;i++){
+      var c = document.createElement('div'); c.className = 'cell';
+      if (pos.indexOf(i) !== -1){ var p = document.createElement('div'); p.className = 'pip'; c.appendChild(p); }
+      grid.appendChild(c);
+    }
+    return grid;
+  }
 
-	  // Start a new game when the page loads
-	  startNewGame();
-	</script>
+  function catRow(k, label, score, scored){
+    var row = document.createElement('button');
+    row.className = 'w-full px-4 py-3 flex items-center justify-between text-left hover:bg-slate-800/60' + (scored ? ' opacity-70' : '');
+    row.disabled = !!scored;
+    row.innerHTML = '<span class="font-medium">' + label + '</span><span class="text-slate-300">' + (score!=null?score:'') + '</span>';
+    row.onclick = function(){ scoreCategory(k); };
+    return row;
+  }
 
+  function renderDice(game){
+    var row = document.getElementById('diceRow'); if (!row) return; row.innerHTML = '';
+    var dice = (game && game.dice) ? game.dice : [];
+    for (var i=0;i<dice.length;i++){
+      var die = dice[i];
+      var held = !!die.held;
+      var inactive = game.current_turn_scored || !game.game_started;
+      var btn = document.createElement('button');
+      btn.className = 'die-btn relative aspect-square rounded-2xl border ' + (held ? 'border-emerald-400 bg-emerald-500/10' : 'border-slate-700 bg-slate-900') + ' p-4 flex items-center justify-center text-slate-100 hover:border-slate-500';
+      btn.disabled = !!inactive;
+      btn.title = held ? 'Held' : 'Click to hold';
+      btn.onclick = (function(idx, inactiveFlag){ return function(){ if (inactiveFlag){ showToast('Roll dice for a new turn'); return; } toggleHold(idx); }; })(i, inactive);
+      var face = dieFace(die.value || 1); btn.appendChild(face);
+      if (held){ var chip = document.createElement('span'); chip.className = 'absolute top-2 right-2 text-emerald-300 text-xs bg-emerald-900/40 border border-emerald-800 px-2 py-0.5 rounded-full'; chip.textContent = 'HELD'; btn.appendChild(chip); }
+      row.appendChild(btn);
+    }
+  }
+
+  function renderScorecard(game){
+    var up = document.getElementById('upperList'); var lo = document.getElementById('lowerList'); if (!up||!lo) return;
+    up.innerHTML = ''; lo.innerHTML = '';
+    var scores = (game && game.scorecard && game.scorecard.scores) ? game.scorecard.scores : {};
+    var i, k, l, j, k2, l2;
+    for (i=0;i<upperCats.length;i++){ k=upperCats[i][0]; l=upperCats[i][1]; up.appendChild(catRow(k,l, scores[k], scores[k]!==null && scores[k]!==undefined)); }
+    for (j=0;j<lowerCats.length;j++){ k2=lowerCats[j][0]; l2=lowerCats[j][1]; lo.appendChild(catRow(k2,l2, scores[k2], scores[k2]!==null && scores[k2]!==undefined)); }
+
+    var upperSubtotal = (game && game.scorecard && typeof game.scorecard.upper_section_total==='number') ? game.scorecard.upper_section_total : 0;
+    var upperBonusPts = (game && game.scorecard && game.scorecard.upper_bonus) ? 50 : 0;
+    var grandTotal = (game && game.scorecard && typeof game.scorecard.total==='number') ? game.scorecard.total : 0;
+    var upperSectionTotal = upperSubtotal + upperBonusPts;
+    var lowerSectionTotal = grandTotal - upperSectionTotal; if (lowerSectionTotal < 0) { lowerSectionTotal = 0; }
+
+    var elUS = document.getElementById('upperSubtotal'); if (elUS) { elUS.textContent = String(upperSubtotal); }
+    var elUB = document.getElementById('upperBonus'); if (elUB) { elUB.textContent = String(upperBonusPts); }
+    var elUT = document.getElementById('upperSectionTotal'); if (elUT) { elUT.textContent = String(upperSectionTotal); }
+    var elLT = document.getElementById('lowerSectionTotal'); if (elLT) { elLT.textContent = String(lowerSectionTotal); }
+    var elTS = document.getElementById('totalScore'); if (elTS) { elTS.textContent = String(grandTotal); }
+  }
+
+  function renderStatus(game){
+    var rollsLeft = document.getElementById('rollsLeft');
+    var savedRolls = document.getElementById('savedRolls');
+    if (rollsLeft) { rollsLeft.textContent = (typeof game.rolls_left==='number' ? game.rolls_left : '—'); }
+    if (savedRolls) { savedRolls.textContent = (game.saved_rolls && game.saved_rolls>0 ? ('+'+game.saved_rolls) : '0'); }
+    var rollBtn = document.getElementById('rollBtn');
+    var rollNote = document.getElementById('rollNote');
+    var noRolls = (typeof game.rolls_left==='number' && game.rolls_left + game.saved_rolls <=0);
+    if (rollBtn){ rollBtn.disabled = noRolls; }
+    if (rollNote){ if (noRolls){ rollNote.classList.remove('hidden'); rollNote.textContent = 'Out of rolls'; } else { rollNote.classList.add('hidden'); } }
+  }
+
+  function showGameOver(final){
+    var m = document.getElementById('gameOverModal'); if (!m) return;
+    var fs = document.getElementById('finalScore'); if (fs) { fs.textContent = String(final); }
+    m.classList.remove('hidden'); m.classList.add('flex');
+  }
+
+  // ---- actions ----
+  function startNewGame(){
+    return api('/game/new', { method: 'POST' }, true).then(function(data){
+      gameId = data.game_id;
+      return updateGameState().then(function(){ showToast('New game started'); });
+    }).catch(function(){ showToast('Could not start a new game'); });
+  }
+
+  function updateGameState(){
+    if (gameId === null) { return Promise.resolve(); }
+    return api('/game/' + gameId, {}, true).then(function(game){
+      renderDice(game); renderScorecard(game); renderStatus(game);
+    }).catch(function(e){ console.error('updateGameState failed', e); });
+  }
+
+  function rollDice(){
+    if (gameId === null){ showToast('Start a new game first'); return; }
+    api('/game/' + gameId + '/roll', { method: 'POST' }, true)
+      .then(function(){ return updateGameState(); })
+      .catch(function(e){
+        if (e && (e.http===400 || e.http===409 || /no rolls left/i.test(e.message))){
+          showToast('Out of rolls — score a category');
+        } else {
+          showToast('Roll failed');
+        }
+      });
+  }
+
+  function toggleHold(idx){
+    if (gameId === null) return;
+    api('/game/' + gameId + '/hold/' + idx, { method: 'POST' }, true)
+      .then(function(){ return updateGameState(); })
+      .catch(function(){ showToast('Cannot hold yet'); });
+  }
+
+  function scoreCategory(category){
+    if (gameId === null) return;
+    api('/game/' + gameId + '/score/' + category, { method: 'POST' }, true)
+      .then(function(data){ if (data && data.game_over){ showGameOver(data.final_score); } return updateGameState(); })
+      .catch(function(){ showToast('Unable to score'); });
+  }
+
+  // ---- boot ----
+  window.addEventListener('DOMContentLoaded', function(){
+    var ng = document.getElementById('newGameBtn'); if (ng) { ng.addEventListener('click', startNewGame); }
+    var rb = document.getElementById('rollBtn'); if (rb) { rb.addEventListener('click', rollDice); }
+    var c = document.getElementById('closeModalBtn'); if (c) { c.addEventListener('click', function(){ var m=document.getElementById('gameOverModal'); if(!m) return; m.classList.add('hidden'); m.classList.remove('flex'); }); }
+    var p = document.getElementById('playAgainBtn'); if (p) { p.addEventListener('click', function(){ var m=document.getElementById('gameOverModal'); if(!m) return; m.classList.add('hidden'); m.classList.remove('flex'); startNewGame(); }); }
+    startNewGame();
+  });
+})();
+</script>
 </body>
 </html>

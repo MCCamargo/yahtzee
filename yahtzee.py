@@ -248,22 +248,29 @@ class Game:
 
 app = Flask(__name__)
 from flask_cors import CORS
-
-CORS(app, resources={
-    r"/*": {
-        "origins": [
-            "https://mccamargo.github.io",
-            "http://localhost:3000",
-            "http://localhost:3001",
-            "http://localhost:5000",
-            "http://localhost:8000",
-            "http://127.0.0.1:8000",
-            "http://127.0.0.1:5000",
-        ],
+# Allow ALL origins and explicitly allow the “null” origin used by file://
+CORS(
+    app,
+    resources={r"/*": {
+        "origins": ["*", "null"],
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type"],
-    }
-})
+    }},
+    supports_credentials=False,
+    send_wildcard=True,       # actually send Access-Control-Allow-Origin: *
+)
+
+# Helpful for any edge cases / 404s still returning without CORS headers
+@app.after_request
+def add_cors_headers(resp):
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+    resp.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    return resp
+
+@app.get("/health")
+def health():
+    return jsonify({"ok": True}), 200
 
 
 # Store active games (in a real app, this would be a database)
