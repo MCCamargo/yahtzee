@@ -267,13 +267,18 @@ def add_cors_headers(resp):
     resp.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
     resp.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
     return resp
+    
+    
+@app.route('/', methods=['GET'])
+def root():
+    return jsonify(status="ok"), 200
 
-@app.get("/health")
+@app.route('/health', methods=['GET'])
 def health():
-    return jsonify({"ok": True}), 200
+    return jsonify(status="ok"), 200
 
 
-# Store active games (in a real app, this would be a database)
+# Store active games
 games = {}
 
 @app.route('/game/new', methods=['POST'])
