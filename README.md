@@ -1,6 +1,6 @@
 # Yahtzee
 
-A web-based implementation (try it here) of a variant of the classic dice game **Yahtzee**. Python backend written by me, html frontend almost entirely written by LLMs.
+A web-based implementation (try it [here](https://mccamargo.github.io/yahtzee/?api=https://yahtzee-api-mauroccamargo.fly.dev)) of a variant of the classic dice game **Yahtzee**. Python backend written by me, html frontend almost entirely written by LLMs.
 
 Players roll six dice, hold the ones they want, and select scoring categories — aiming for the highest total score possible. The variation from the classic rules comes from the possibility of saving "extra rolls" for later turns.
 
