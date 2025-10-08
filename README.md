@@ -1,4 +1,4 @@
-# Yahtzee
+# Yahtzee ([Web version link](https://mccamargo.github.io/yahtzee/?api=https://yahtzee-api-mauroccamargo.fly.dev))
 
 A web-based implementation (try it [here](https://mccamargo.github.io/yahtzee/?api=https://yahtzee-api-mauroccamargo.fly.dev)) of a variant of the classic dice game **Yahtzee**. Python backend written by me, html frontend almost entirely written by LLMs.
 
